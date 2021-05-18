@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Chat IO</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+        <!-- CSS only -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+        <style>
+            body {
+                background: #f9f9f9;
+            }
+
+            .container {
+                padding: 2%;
+            }
+
+            #chatWindow {
+                height: 400px;
+            }
+
+            #mainWrapper {
+                display: none;
+            }
+
+            #chatWrapper {
+                float: left;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: #f4f4f4;
+                padding: 15px;
+            }
+
+            #userWrapper {
+                float: left;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: #f4f4f4;
+                padding: 10px;
+                margin-left: 20px;
+                width: 250px;
+                max-height: 200px;
+            }
+
+            #namesWrapper {
+                float: left;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: #f4f4f4;
+                padding: 10px;
+                margin-left: 20px;
+            }
+
+            input[type="text"] {
+                height: 40px;
+                border: none;
+                border-bottom: 2px solid gray;
+            }
+
+            #error {
+                display: none;
+            }
+
+           
+        </style>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <div class="container">
+            <div id="namesWrapper">
+                <h2>Chat IO</h2>
+                <p>Create Username</p>
+                <div id="error" class="alert alert-danger" role="alert"></div>
+                <form id="usernameForm">
+                    <input type="text" name="username" size="35" id="username" />
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </form>
+            </div>
+
+            <div id="mainWrapper">
+                <h2>Chatroom</h2>
+                <div id="chatWrapper">
+                    <div id="chatWindow"></div>
+                    <form id="messageForm">
+                        <input type="text" name="message" size="35" id="message" placeholder="Say Something..." />
+                        <input type="submit" value="Submit" class="btn btn-primary" />
+                    </form>
+                </div>
+                <div id="userWrapper">
+                    <h4>Active users</h4>
+                    <hr>
+                    <div id="users"></div>
+                </div>
+            </div>
+        </div>
+        
+        <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+            crossorigin="anonymous"></script>
+        <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+                integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+                crossorigin="anonymous"></script>
+        <script>
+            $(function(){
+                var socket = io.connect();
+                var $messageForm = $('#messageForm');
+                var $message = $("#message");
+                var $chat = $("#chatWindow");
+                var $usernameForm = $("#usernameForm");
+                var $users = $("#users");
+                var $username = $("#username");
+                var $error = $("#error");
+
+                $usernameForm.submit(function (e) {
+                    e.preventDefault();
+                    socket.emit("new user",  $username.val(), function(data) {
+                        if(data) {
+                            $("#namesWrapper").hide();
+                            $("#mainWrapper").show();
+                        } else {
+                            $error.css("display","block")
+                            $error.html("Username is taken.")
+                        }
+                    });
+                });
+
+                socket.on("usernames", function (data) {
+                    var html = "";
+                    for (let i = 0; i < data.length; i++) {
+                        html += data[i] + "<br>";
+                    }
+                    $users.html(html);
+                });
+
+                $messageForm.submit(function(e){
+                    e.preventDefault();
+                    socket.emit("send message", $message.val());
+                    $message.val("");
+                });
+
+                socket.on("new message", function(data) {
+                    $chat.append("<strong>" + data.user + " : </strong>" + data.msg + "<br>");
+                });
+
+            });
+        </script>
+        
+        <!-- JavaScript Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+            crossorigin="anonymous"></script>
+        <script src="" async defer></script>
+    </body>
+</html>
